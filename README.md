@@ -1,5 +1,5 @@
 # LibDisplay #
-----------------------------
+
 ##Overview##
 
 Lots of tweaks need to find out if an app is currently open, or even to open them itself. The way it does this is to use the SBDisplayStacks, however as there isn't an iVar in any classes that give them to you each tweak hooks the init & dealloc methods of that class. Then each tweak tracks them itself.
@@ -8,9 +8,9 @@ This also manages launching applications for you. If you want to launch an appli
 Even if no one else finds this useful I'll be able to minimise code in my own tweaks.
 
 
----------------------------
-
 ## Usage ##
+
+---------------------------
 
 #### Get currently running applications ####
 
@@ -19,12 +19,16 @@ Returns an NSArray ordered oldest to newest.
     [LibDisplay sharedInstance].runningApplications
 
 
+---------------------------
+
 #### Get currently open application ####
 
 Get an SBApplication object of the application currently in the foreground, will be nil if on homescreen.
 
     [LibDisplay sharedInstance].topApplication
 
+
+---------------------------
 
 #### Get the displayStacks ####
 
@@ -46,6 +50,8 @@ Although part of the point of LibDisplay is that you shouldn't need to you can, 
     [[LibDisplay sharedInstance] SBWSuspendedEventOnlyDisplayStack;
 
 
+---------------------------
+
 #### Set your own object to be notified of apps launching and exiting (like a delegate) ####
 
 To allow multiple tweaks to use this I decided against a standard delegate and went for this instead.
@@ -56,6 +62,8 @@ Each object sent most conform to the 'LibDisplayDelegate' protocol.
     // Remove delegate
     [[LibDisplay sharedInstance] removeNotifier:self];
 
+
+---------------------------
 
 #### Switch applications ####
 
@@ -72,6 +80,9 @@ However if you do your own animation such as CardSwitcher does then behind this 
     // If it is already backgrounded it'll appear instantly, else it'll appear as soon as it has loaded into memory.
     [[LibDisplay sharedInstance] activateApplication:toApp animated:NO];
 
+
+---------------------------
+
 #### Close applications ####
 
 LibDisplay can also quit applications as well as launch them.
@@ -83,6 +94,9 @@ This is the part that needs work [app kill] works on most apps but has 2 problem
     // Quit an application and specify if you want it removed the app switcher as well.
     [[LibDisplay sharedInstance] quitApplication:app removeFromSwitcher:YES];
 
+
+
+---------------------------
 
 ### Possible Future Features ###
 
