@@ -65,6 +65,7 @@ Each object sent most conform to the 'LibDisplayDelegate' protocol.
 
 ---------------------------
 
+
 #### Switch applications ####
 
 LibDisplay can also switch applications for you. Most of the time you'll want to animate between apps as that is what iOS does and so is what the user expects. In this case LibDisplay will tell iOS's built in method (SBUIController activate...) to switch applications.
@@ -82,6 +83,7 @@ However if you do your own animation such as CardSwitcher does then behind this 
 
 
 ---------------------------
+
 
 #### Close applications ####
 
