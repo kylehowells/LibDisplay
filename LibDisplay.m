@@ -232,6 +232,7 @@ static LibDisplay *_instance;
     if (removeFromSwitcher) {
         SBAppSwitcherController *appSwitcherController = (SBAppSwitcherController*)[objc_getClass("SBAppSwitcherController") sharedInstance];
         if ([appSwitcherController respondsToSelector:@selector(_removeApplicationFromRecents:)]) {
+            // The app isn't in the recents list if it's currently open.
             [appSwitcherController _removeApplicationFromRecents:application];
         }
     }
