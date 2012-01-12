@@ -50,110 +50,106 @@
     </div>
 
     
-      <p>
+      <div id="readme" class="blob instapaper_body">
+    <div class="markdown-body"><h1>LibDisplay</h1>
 
-Lots of tweaks need to find out if an app is currently open, or even to open them itself. The way it does this is to use the SBDisplayStacks, however as there isn't an iVar in any classes that give them to you each tweak hooks the init & dealloc methods of that class. Then each tweak tracks them itself.
+<h2>Overview</h2>
+
+<p>Lots of tweaks need to find out if an app is currently open, or even to open them itself. The way it does this is to use the SBDisplayStacks, however as there isn't an iVar in any classes that give them to you each tweak hooks the init &amp; dealloc methods of that class. Then each tweak tracks them itself.
 Another thing it does is track which applications are actually running at any one time by maintaining an array of running applications.
 This also manages launching applications for you. If you want to launch an application animated it'll let iOS perform the standard app switch animation (which is about 0.5-0.6 seconds). However if you don't what an animation but instead to switch instantly from one app to another it'll push and pop the applications itself to the various displayStacks.
-Even if no one else finds this useful I'll be able to minimise code in my own tweaks.
+Even if no one else finds this useful I'll be able to minimise code in my own tweaks.</p>
 
+<h2>Usage</h2>
 
-## Usage ##
+<hr><h4>Get currently running applications</h4>
 
----------------------------
+<p>Returns an NSArray ordered oldest to newest.</p>
 
-#### Get currently running applications ####
+<pre><code>[LibDisplay sharedInstance].runningApplications
+</code></pre>
 
-Returns an NSArray ordered oldest to newest.
+<hr><h4>Get currently open application</h4>
 
-    [LibDisplay sharedInstance].runningApplications
+<p>Get an SBApplication object of the application currently in the foreground, will be nil if on homescreen.</p>
 
+<pre><code>[LibDisplay sharedInstance].topApplication
+</code></pre>
 
----------------------------
+<hr><h4>Get the displayStacks</h4>
 
-#### Get currently open application ####
+<p>Although part of the point of LibDisplay is that you shouldn't need to you can, if you wish get the displayStacks themselves (or if you need even more control get the array of the displayStacks).</p>
 
-Get an SBApplication object of the application currently in the foreground, will be nil if on homescreen.
+<pre><code>// Array of the displayStacks
+[LibDisplay sharedInstance].displayStacks
 
-    [LibDisplay sharedInstance].topApplication
+// The displayStack you push launching applications onto.
+[[LibDisplay sharedInstance] SBWPreActivateDisplayStack]
 
+// The displayStack of displays currently showing, how we get the currently open app.
+[[LibDisplay sharedInstance] SBWActiveDisplayStack]
 
----------------------------
+// The displayStack you push closing displays onto.
+[[LibDisplay sharedInstance] SBWSuspendingDisplayStack]
 
-#### Get the displayStacks ####
+// I guess the displayStack things like skype are backgrounded to???
+[[LibDisplay sharedInstance] SBWSuspendedEventOnlyDisplayStack;
+</code></pre>
 
-Although part of the point of LibDisplay is that you shouldn't need to you can, if you wish get the displayStacks themselves (or if you need even more control get the array of the displayStacks).
+<hr><h4>Set your own object to be notified of apps launching and exiting (like a delegate)</h4>
 
-    // Array of the displayStacks
-    [LibDisplay sharedInstance].displayStacks
+<p>To allow multiple tweaks to use this I decided against a standard delegate and went for this instead.
+Each object sent most conform to the 'LibDisplayDelegate' protocol.</p>
 
-    // The displayStack you push launching applications onto.
-    [[LibDisplay sharedInstance] SBWPreActivateDisplayStack]
+<pre><code>// Add delegate
+[[LibDisplay sharedInstance] notifyOfAppLaunches:self];
+// Remove delegate
+[[LibDisplay sharedInstance] removeNotifier:self];
+</code></pre>
 
-    // The displayStack of displays currently showing, how we get the currently open app.
-    [[LibDisplay sharedInstance] SBWActiveDisplayStack]
+<hr><h4>Switch applications</h4>
 
-    // The displayStack you push closing displays onto.
-    [[LibDisplay sharedInstance] SBWSuspendingDisplayStack]
+<p>LibDisplay can also switch applications for you. Most of the time you'll want to animate between apps as that is what iOS does and so is what the user expects. In this case LibDisplay will tell iOS's built in method (SBUIController activate...) to switch applications.
+However if you do your own animation such as CardSwitcher does then behind this clever little animation you just what the apps to switch instantly, that way you can control exactly how long or short the animation the user sees should be.</p>
 
-    // I guess the displayStack things like skype are backgrounded to???
-    [[LibDisplay sharedInstance] SBWSuspendedEventOnlyDisplayStack;
+<pre><code>// Activate an app with the default switcher animation.
+[[LibDisplay sharedInstance] activateApplication:toApp animated:YES];
 
+// Deactivate the currently open application (the animated flag is pointless here)
+[[LibDisplay sharedInstance] activateApplication:nil animated:YES];
 
----------------------------
+// Activate an application instantly.
+// If it is already backgrounded it'll appear instantly, else it'll appear as soon as it has loaded into memory.
+[[LibDisplay sharedInstance] activateApplication:toApp animated:NO];
+</code></pre>
 
-#### Set your own object to be notified of apps launching and exiting (like a delegate) ####
+<hr><h4>Close applications</h4>
 
-To allow multiple tweaks to use this I decided against a standard delegate and went for this instead.
-Each object sent most conform to the 'LibDisplayDelegate' protocol.
+<p>LibDisplay can also quit applications as well as launch them.
+This is the part that needs work [app kill] works on most apps but has 2 problems, it crashes them (kill = instant) so they don't do there close down methods like saving ect... &amp; it doesn't work on root apps (namely iFile being the one people will notice). I was given some code to close apps properly by "@jmeosbn" on GitHub. However it causes a weird SpringBoard crash on iOS 4.0 and as it doesn't crash instantly but after a delay I haven't be able to/tried much to fix it. There's a hacky solution where it'll only run his code if on iOS 4.1+ as that's what I tested it as working on. It works quite well, however I would like to improve this method.</p>
 
-    // Add delegate
-    [[LibDisplay sharedInstance] notifyOfAppLaunches:self];
-    // Remove delegate
-    [[LibDisplay sharedInstance] removeNotifier:self];
+<pre><code>// Quit an application (won't remove from the app switcher)
+[[LibDisplay sharedInstance] quitApplication:app];
 
+// Quit an application and specify if you want it removed the app switcher as well.
+[[LibDisplay sharedInstance] quitApplication:app removeFromSwitcher:YES];
+</code></pre>
 
----------------------------
+<hr><h3>Possible Future Features</h3>
 
-Switch applications
+<ul>
+<li> Get a UIImage of a currently running application.</li>
+<li> Get a live view of an open app? (would be pointless mostly, just use the SBApplication methods).</li>
+<li>? (I can't think of anything else really)</li>
+</ul></div>
+  </div>
 
-LibDisplay can also switch applications for you. Most of the time you'll want to animate between apps as that is what iOS does and so is what the user expects. In this case LibDisplay will tell iOS's built in method (SBUIController activate...) to switch applications.
-However if you do your own animation such as CardSwitcher does then behind this clever little animation you just what the apps to switch instantly, that way you can control exactly how long or short the animation the user sees should be.
+          </div>
+        </div>
+      </div>
+    </div>
 
-    // Activate an app with the default switcher animation.
-    [[LibDisplay sharedInstance] activateApplication:toApp animated:YES];
-
-    // Deactivate the currently open application (the animated flag is pointless here)
-    [[LibDisplay sharedInstance] activateApplication:nil animated:YES];
-
-    // Activate an application instantly.
-    // If it is already backgrounded it'll appear instantly, else it'll appear as soon as it has loaded into memory.
-    [[LibDisplay sharedInstance] activateApplication:toApp animated:NO];
-
-
----------------------------
-
-Close applications
-
-LibDisplay can also quit applications as well as launch them.
-This is the part that needs work [app kill] works on most apps but has 2 problems, it crashes them (kill = instant) so they don't do there close down methods like saving ect... & it doesn't work on root apps (namely iFile being the one people will notice). I was given some code to close apps properly by "@jmeosbn" on GitHub. However it causes a weird SpringBoard crash on iOS 4.0 and as it doesn't crash instantly but after a delay I haven't be able to/tried much to fix it. There's a hacky solution where it'll only run his code if on iOS 4.1+ as that's what I tested it as working on. It works quite well, however I would like to improve this method.
-
-    // Quit an application (won't remove from the app switcher)
-    [[LibDisplay sharedInstance] quitApplication:app];
-
-    // Quit an application and specify if you want it removed the app switcher as well.
-    [[LibDisplay sharedInstance] quitApplication:app removeFromSwitcher:YES];
-
-
-
----------------------------
-
-Possible Future Features
-
-*  Get a UIImage of a currently running application.
-*  Get a live view of an open app? (would be pointless mostly, just use the SBApplication methods).
-* ? (I can't think of anything else really)
-</p>
+  </div>
     
 
     
