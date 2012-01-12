@@ -50,9 +50,7 @@
     </div>
 
     
-      <div class="markdown-body"># LibDisplay #
-
-##Overview##
+      <p>
 
 Lots of tweaks need to find out if an app is currently open, or even to open them itself. The way it does this is to use the SBDisplayStacks, however as there isn't an iVar in any classes that give them to you each tweak hooks the init & dealloc methods of that class. Then each tweak tracks them itself.
 Another thing it does is track which applications are actually running at any one time by maintaining an array of running applications.
@@ -117,7 +115,7 @@ Each object sent most conform to the 'LibDisplayDelegate' protocol.
 
 ---------------------------
 
-#### Switch applications ####
+Switch applications
 
 LibDisplay can also switch applications for you. Most of the time you'll want to animate between apps as that is what iOS does and so is what the user expects. In this case LibDisplay will tell iOS's built in method (SBUIController activate...) to switch applications.
 However if you do your own animation such as CardSwitcher does then behind this clever little animation you just what the apps to switch instantly, that way you can control exactly how long or short the animation the user sees should be.
@@ -135,7 +133,7 @@ However if you do your own animation such as CardSwitcher does then behind this 
 
 ---------------------------
 
-#### Close applications ####
+Close applications
 
 LibDisplay can also quit applications as well as launch them.
 This is the part that needs work [app kill] works on most apps but has 2 problems, it crashes them (kill = instant) so they don't do there close down methods like saving ect... & it doesn't work on root apps (namely iFile being the one people will notice). I was given some code to close apps properly by "@jmeosbn" on GitHub. However it causes a weird SpringBoard crash on iOS 4.0 and as it doesn't crash instantly but after a delay I haven't be able to/tried much to fix it. There's a hacky solution where it'll only run his code if on iOS 4.1+ as that's what I tested it as working on. It works quite well, however I would like to improve this method.
@@ -150,11 +148,12 @@ This is the part that needs work [app kill] works on most apps but has 2 problem
 
 ---------------------------
 
-### Possible Future Features ###
+Possible Future Features
 
 *  Get a UIImage of a currently running application.
 *  Get a live view of an open app? (would be pointless mostly, just use the SBApplication methods).
-* ? (I can't think of anything else really)</div>
+* ? (I can't think of anything else really)
+</p>
     
 
     
