@@ -51,11 +51,11 @@
 
     
       <div id="readme" class="blob instapaper_body">
-    <div class="markdown-body"><h1>LibDisplay</h1>
+    <div class="markdown-body">
 
 <h2>Overview</h2>
 
-<p>Lots of tweaks need to find out if an app is currently open, or even to open them itself. The way it does this is to use the SBDisplayStacks, however as there isn't an iVar in any classes that give them to you each tweak hooks the init &amp; dealloc methods of that class. Then each tweak tracks them itself.
+<p>Lots of tweaks need to find out if an app is currently open, or even to open them itself. The way to do does this is by using the SBDisplayStacks, however as there isn't an iVar in any classes that give them to you each tweak hooks the init &amp; dealloc methods of that class. Then each tweak tracks them itself.
 Another thing it does is track which applications are actually running at any one time by maintaining an array of running applications.
 This also manages launching applications for you. If you want to launch an application animated it'll let iOS perform the standard app switch animation (which is about 0.5-0.6 seconds). However if you don't what an animation but instead to switch instantly from one app to another it'll push and pop the applications itself to the various displayStacks.
 Even if no one else finds this useful I'll be able to minimise code in my own tweaks.</p>
