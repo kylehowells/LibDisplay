@@ -35,13 +35,14 @@
 -(SBDisplayStack*)SBWSuspendedEventOnlyDisplayStack;
 
 #pragma mark - Application stuff
-@property (nonatomic, readonly) NSMutableArray *runningApplications;    // The array's order is oldest to newest.
+@property (nonatomic, readonly) NSMutableArray *runningApplications;    // The array's order is oldest to newest opened.
 -(SBApplication*)topApplication;    // Currently open application.
 
 -(void)activateApplication:(SBApplication *)toApp animated:(BOOL)animated;  // Done I think
 // Quit applications - (can't close root apps (iFile) below iOS 4.1)
 -(void)quitApplication:(SBApplication*)application; // Defaults to NO
 -(void)quitApplication:(SBApplication*)application removeFromSwitcher:(BOOL)removeFromSwitcher;
+-(void)removeApplicationFromSwitcher:(SBApplication*)app;
 
 #pragma mark - Track apps opening and closing
 // Rather then a single 'delegate' I thought this would let lots of tweaks track apps opening and closing.
@@ -50,7 +51,6 @@
 -(void)notifyOfAppLaunches:(id <LibDisplayDelegate>)new_delegate;
 // Ask to be notified of app closes
 -(void)removeNotifier:(id <LibDisplayDelegate>)existing_delegate;
-
 // This is only really useful for something like CardSwitcher or Multifl0w that displays the currently running...
 //... apps. So if while it's open an app closes that should be removed from their interfaces.
 

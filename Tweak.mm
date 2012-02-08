@@ -3,6 +3,7 @@
 @interface LibDisplay()
 -(void)appLaunched:(SBApplication*)app;
 -(void)appQuit:(SBApplication*)app;
+-(void)addToFront:(SBApplication*)app;
 @end
 
 #pragma mark - Display stacks
@@ -27,7 +28,8 @@
 %hook SBAppSwitcherController
 -(void)applicationLaunched:(SBApplication*)app{
     %orig;
-    
+
+    NSLog(@"SBAppSwitcherController: -applicationLaunched: %@", app);
     [[LibDisplay sharedInstance] appLaunched:app];
 }
 
@@ -35,6 +37,22 @@
     [[LibDisplay sharedInstance] appQuit:app];
     
     %orig;
+}
+%end
+
+
+%hook SBAppSwitcherModel
+// = SBApplication on 4.x, but an NSString on 5.0
+-(void)addToFront:(id)app{
+    %orig;
+
+    NSLog(@"SBAppSwitcherModel: -addToFront: %@", app);
+    [[LibDisplay sharedInstance] addToFront:app];
+}
+-(void)remove:(id)app{
+    %orig;
+    
+    NSLog(@"SBAppSwitcherModel: -remove: %@", app);
 }
 %end
 

@@ -22,13 +22,22 @@
 #define SYSTEM_VERSION_LESS_THAN(v)                 ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] == NSOrderedAscending)
 #define SYSTEM_VERSION_LESS_THAN_OR_EQUAL_TO(v)     ([[[UIDevice currentDevice] systemVersion] compare:v options:NSNumericSearch] != NSOrderedDescending)
 
+
+#pragma mark - Headers
 @interface SpringBoard : UIApplication {}
-- (void)setBackgroundingEnabled:(BOOL)backgroundingEnabled forDisplayIdentifier:(NSString *)displayIdentifier;
+-(void)setBackgroundingEnabled:(BOOL)backgroundingEnabled forDisplayIdentifier:(NSString *)displayIdentifier;
+-(void)showSpringBoardStatusBar;
 @end
 
-@interface SBAppSwitcherController ()
--(id)sharedInstance;
-//-(void)_removeApplicationFromRecents:(SBApplication*)app;
+@interface SBAppSwitcherModel : NSObject {}
++(SBAppSwitcherModel*)sharedInstance;
+-(void)addToFront:(id)front;
+-(void)remove:(id)remove;
+@end
+
+@interface SBApplicationController : NSObject {}
++(SBApplicationController*)sharedInstance;
+-(SBApplication*)applicationWithDisplayIdentifier:(NSString*)displayIdentifier;
 @end
 
 @interface SBApplication ()
@@ -39,6 +48,8 @@
 -(void)resume;
 @end
 
+
+#pragma mark - Private methods
 @interface LibDisplay()
 -(id)_init;
 @property (nonatomic, readonly) NSMutableArray *delegates;
@@ -46,6 +57,8 @@
 
 -(void)appLaunched:(SBApplication*)app;
 -(void)appQuit:(SBApplication*)app;
+
+-(void)addToFront:(SBApplication*)app;
 @end
 
 
@@ -132,7 +145,29 @@ static LibDisplay *_instance;
         }
     }
 }
+// Hacky stuff here :( it changed from SBApplication to NSString but without
+// changing the method names at all so you can't work out what it wants. + it
+// has always just stored the displayID so looking at the array iVar won't help either.
+-(void)addToFront:(id)app{
+    NSLog(@"what is -addToFront: %@", app);
+    NSMutableArray *array = self.runningApplications;
 
+    if ([app isKindOfClass:[NSString class]]) {
+        app = [(SBApplicationController*)[objc_getClass("SBApplicationController") sharedInstance] applicationWithDisplayIdentifier:app];
+    }
+
+    if (app) {
+        if ([array containsObject:app]) {
+            [array removeObject:app];
+            [array addObject:app];
+        }
+        else {
+            [self appLaunched:app];
+        }
+    }
+}
+
+#pragma mark - Send delegates info.
 -(void)notifyOfAppLaunches:(id <LibDisplayDelegate>)new_delegate{
     if (![self.delegates containsObject:new_delegate]) {
         [self.delegates addObject:new_delegate];
@@ -181,19 +216,20 @@ static LibDisplay *_instance;
         [fromApp clearActivationSettings];
         [fromApp clearDeactivationSettings];
 
+        // Animate (to fix a backgrounder related bug)
+        [fromApp setDeactivationSetting:2 flag:YES];
+
         // Now pop is from the Active displayStack
         [[self SBWActiveDisplayStack] popDisplay:fromApp];
         // And push it onto the Suspending displayStack
         [[self SBWSuspendingDisplayStack] pushDisplay:fromApp];
-    }
 
-    if (!toApp) {
-        // The user should now be on the homescreen.
-        // There's a bug above 4.? (4.1 or 4.2 I think) where the status bar won't be there.
-
-        SBUIController *uiController = (SBUIController*)[objc_getClass("SBUIController") sharedInstance];
-        if ([uiController respondsToSelector:@selector(createFakeSpringBoardStatusBar)]) {
-            [uiController createFakeSpringBoardStatusBar];
+        
+        if (!toApp) {
+            SpringBoard *springBoard = UIApp;
+            if ([springBoard respondsToSelector:@selector(showSpringBoardStatusBar)]) {
+                [springBoard showSpringBoardStatusBar];
+            }
         }
     }
 }
@@ -230,10 +266,25 @@ static LibDisplay *_instance;
     //[[objc_getClass("SBAppSwitcherController") sharedInstance] _quitButtonHit:APP];
 
     if (removeFromSwitcher) {
-        SBAppSwitcherController *appSwitcherController = (SBAppSwitcherController*)[objc_getClass("SBAppSwitcherController") sharedInstance];
-        if ([appSwitcherController respondsToSelector:@selector(_removeApplicationFromRecents:)]) {
-            // The app isn't in the recents list if it's currently open.
-            [appSwitcherController _removeApplicationFromRecents:application];
+        [self removeApplicationFromSwitcher:application];
+    }
+}
+
+-(void)removeApplicationFromSwitcher:(SBApplication*)app{
+//    SBAppSwitcherController *appSwitcherController = (SBAppSwitcherController*)[objc_getClass("SBAppSwitcherController") sharedInstance];
+//    if ([appSwitcherController respondsToSelector:@selector(_removeApplicationFromRecents:)]) {
+//        // The app isn't in the recents list if it's currently open.
+//        [appSwitcherController _removeApplicationFromRecents:application];
+//    }
+
+    SBAppSwitcherModel *switcherModel = (SBAppSwitcherModel*)[objc_getClass("SBAppSwitcherModel") sharedInstance];
+    if ([switcherModel respondsToSelector:@selector(remove:)]) {
+        // remove: takes an SBApplication on iOS 4 but an NSString on iOS 5 :(
+        if (SYSTEM_VERSION_LESS_THAN(@"5.0")) {
+            [switcherModel remove:app];
+        }
+        else {
+            [switcherModel remove:app.displayIdentifier];
         }
     }
 }
@@ -252,5 +303,4 @@ static LibDisplay *_instance;
 -(id)autorelease{
     return self;
 }
-
 @end
