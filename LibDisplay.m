@@ -201,8 +201,10 @@ static LibDisplay *_instance;
         [toApp clearActivationSettings];
         [toApp clearDeactivationSettings];
 
-        // 20 = appToApp
-        [toApp setActivationSetting:20 flag:YES];
+        if (fromApp) {
+            // 20 = appToApp
+            [toApp setActivationSetting:20 flag:YES];
+        }
 
         // Note if it's a large application the user might see a brief flash of the homescreen.
         [[self SBWPreActivateDisplayStack] pushDisplay:toApp];
@@ -216,21 +218,22 @@ static LibDisplay *_instance;
         [fromApp clearActivationSettings];
         [fromApp clearDeactivationSettings];
 
-        // Animate (to fix a backgrounder related bug)
-        [fromApp setDeactivationSetting:2 flag:YES];
-
-        // Now pop is from the Active displayStack
-        [[self SBWActiveDisplayStack] popDisplay:fromApp];
-        // And push it onto the Suspending displayStack
-        [[self SBWSuspendingDisplayStack] pushDisplay:fromApp];
-
-        
         if (!toApp) {
             SpringBoard *springBoard = UIApp;
             if ([springBoard respondsToSelector:@selector(showSpringBoardStatusBar)]) {
                 [springBoard showSpringBoardStatusBar];
             }
+
+            if ([SPRINGBOARD respondsToSelector:@selector(setBackgroundingEnabled:forDisplayIdentifier:)]) {
+                // Animate (to fix a backgrounder related bug)
+                [fromApp setDeactivationSetting:2 flag:YES];
+            }
         }
+
+        // Now pop is from the Active displayStack
+        [[self SBWActiveDisplayStack] popDisplay:fromApp];
+        // And push it onto the Suspending displayStack
+        [[self SBWSuspendingDisplayStack] pushDisplay:fromApp];
     }
 }
 
