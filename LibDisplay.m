@@ -143,7 +143,7 @@ static LibDisplay *_instance;
     }
 }
 -(void)appFinishedLaunching:(SBApplication*)app{
-    if (![self.launchedApps containsObject:app]) {
+    if (![self.launchedApps containsObject:app] && [self.runningApplications containsObject:app]) {
         [self.launchedApps addObject:app];
     }
 }
