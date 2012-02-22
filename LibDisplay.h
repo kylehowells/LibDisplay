@@ -37,6 +37,7 @@
 #pragma mark - Application stuff
 @property (nonatomic, readonly) NSMutableArray *runningApplications;    // The array's order is oldest to newest opened.
 -(SBApplication*)topApplication;    // Currently open application.
+-(BOOL)applicationIsLaunching:(SBApplication*)application; // Is it still opening?
 
 -(void)activateApplication:(SBApplication *)toApp animated:(BOOL)animated;  // Done I think
 // Quit applications - (can't close root apps (iFile) below iOS 4.1)

@@ -1,7 +1,9 @@
 #import "LibDisplay.h"
 
 @interface LibDisplay()
+@property (nonatomic, readonly) NSMutableArray *launchedApps;
 -(void)appLaunched:(SBApplication*)app;
+-(void)appFinishedLaunching:(SBApplication*)app;
 -(void)appQuit:(SBApplication*)app;
 -(void)addToFront:(SBApplication*)app;
 @end
@@ -58,6 +60,12 @@
 
 
 %hook SBApplication
+- (void)launchSucceeded:(BOOL)arg1 {
+    [[LibDisplay sharedInstance] appFinishedLaunching:self];
+
+    %orig;
+}
+
 -(void)exitedCommon{
     [[LibDisplay sharedInstance] appQuit:self];
     

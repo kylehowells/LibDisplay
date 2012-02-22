@@ -52,10 +52,12 @@
 #pragma mark - Private methods
 @interface LibDisplay()
 -(id)_init;
+@property (nonatomic, readonly) NSMutableArray *launchedApps;
 @property (nonatomic, readonly) NSMutableArray *delegates;
 -(SBDisplayStack*)stackAtIndex:(int)index;
 
 -(void)appLaunched:(SBApplication*)app;
+-(void)appFinishedLaunching:(SBApplication*)app;
 -(void)appQuit:(SBApplication*)app;
 
 -(void)addToFront:(SBApplication*)app;
@@ -67,6 +69,7 @@ static LibDisplay *_instance;
 @implementation LibDisplay
 @synthesize displayStacks = _displayStacks;
 @synthesize runningApplications = _runningApplications;
+@synthesize launchedApps = _launchedApps;
 @synthesize delegates = _delegates;
 
 #pragma mark - Singleton Methods
@@ -85,6 +88,7 @@ static LibDisplay *_instance;
     if ((self = [super init])) {
         _displayStacks = [[NSMutableArray alloc] init];
         _runningApplications = [[NSMutableArray alloc] init];
+        _launchedApps = [[NSMutableArray alloc] init];
         _delegates = [[NSMutableArray alloc] init];
     }
 
@@ -124,6 +128,10 @@ static LibDisplay *_instance;
     return [[self SBWActiveDisplayStack] topApplication];
 }
 
+-(BOOL)applicationIsLaunching:(SBApplication*)application{
+    return (![self.launchedApps containsObject:application] && [self.runningApplications containsObject:application]);
+}
+
 #pragma mark Application Lifetime
 -(void)appLaunched:(SBApplication*)app{
     if (![self.runningApplications containsObject:app]) {
@@ -132,6 +140,11 @@ static LibDisplay *_instance;
         for (NSObject <LibDisplayDelegate> *delegate in self.delegates) {
             [delegate performSelector:@selector(applicationDidLaunch:) withObject:app];
         }
+    }
+}
+-(void)appFinishedLaunching:(SBApplication*)app{
+    if (![self.launchedApps containsObject:app]) {
+        [self.launchedApps addObject:app];
     }
 }
 -(void)appQuit:(SBApplication*)app{
@@ -143,6 +156,10 @@ static LibDisplay *_instance;
                 [delegate performSelector:@selector(applicationDidQuit:) withObject:app];
             }
         }
+    }
+
+    if ([self.launchedApps containsObject:app]) {
+        [self.launchedApps removeObject:app];
     }
 }
 // Hacky stuff here :( it changed from SBApplication to NSString but without
