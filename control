@@ -1,7 +1,7 @@
 Package: com.iky1e.libdisplay
 Name: LibDisplay
 Depends: mobilesubstrate
-Version: 0.5
+Version: 0.12
 Architecture: iphoneos-arm
 Description: Developer library for managing and tracking apps.
 Maintainer: Kyle Howells

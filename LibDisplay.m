@@ -40,6 +40,10 @@
 -(SBApplication*)applicationWithDisplayIdentifier:(NSString*)displayIdentifier;
 @end
 
+@interface SBUIController ()
+-(void)dismissSwitcherAnimated:(BOOL)animated;
+@end
+
 @interface SBApplication ()
 -(int)suspensionType;
 @end
@@ -61,9 +65,11 @@
 -(void)appQuit:(SBApplication*)app;
 
 -(void)addToFront:(SBApplication*)app;
+-(void)closeSwitcher;
 @end
 
 
+static BOOL sbAppNotNSString = NO;
 static LibDisplay *_instance;
 
 @implementation LibDisplay
@@ -166,7 +172,7 @@ static LibDisplay *_instance;
 // changing the method names at all so you can't work out what it wants. + it
 // has always just stored the displayID so looking at the array iVar won't help either.
 -(void)addToFront:(id)app{
-    NSLog(@"what is -addToFront: %@", app);
+    //NSLog(@"what is -addToFront: %@", app);
     NSMutableArray *array = self.runningApplications;
 
     if ([app isKindOfClass:[NSString class]]) {
@@ -174,6 +180,7 @@ static LibDisplay *_instance;
     }
 
     if (app) {
+        sbAppNotNSString = YES
         if ([array containsObject:app]) {
             [array removeObject:app];
             [array addObject:app];
@@ -214,6 +221,12 @@ static LibDisplay *_instance;
 
     // Now, if we were asked to, open the other app.
     if (toApp) {
+        // Prevent seeing and interacting with the homescreen
+        SBUIController *uiController = (SBUIController*)[objc_getClass("SBUIController") sharedInstance];
+        if ([uiController respondsToSelector:@selector(fadeIconsForScatter:duration:startTime:)]) {
+            [uiController fadeIconsForScatter:YES duration:0 startTime:CACurrentMediaTime()];
+        }
+
         [toApp clearDisplaySettings];
         [toApp clearActivationSettings];
         [toApp clearDeactivationSettings];
@@ -241,10 +254,10 @@ static LibDisplay *_instance;
                 [springBoard showSpringBoardStatusBar];
             }
 
-            if ([SPRINGBOARD respondsToSelector:@selector(setBackgroundingEnabled:forDisplayIdentifier:)]) {
-                // Animate (to fix a backgrounder related bug)
-                [fromApp setDeactivationSetting:2 flag:YES];
-            }
+//            if ([SPRINGBOARD respondsToSelector:@selector(setBackgroundingEnabled:forDisplayIdentifier:)]) {
+//                // Animate (to fix a backgrounder related bug)
+//                [fromApp setDeactivationSetting:2 flag:YES];
+//            }
         }
 
         // Now pop is from the Active displayStack
@@ -252,6 +265,8 @@ static LibDisplay *_instance;
         // And push it onto the Suspending displayStack
         [[self SBWSuspendingDisplayStack] pushDisplay:fromApp];
     }
+
+    [self closeSwitcher];
 }
 
 -(void)quitApplication:(SBApplication*)application{
@@ -300,11 +315,24 @@ static LibDisplay *_instance;
     SBAppSwitcherModel *switcherModel = (SBAppSwitcherModel*)[objc_getClass("SBAppSwitcherModel") sharedInstance];
     if ([switcherModel respondsToSelector:@selector(remove:)]) {
         // remove: takes an SBApplication on iOS 4 but an NSString on iOS 5 :(
-        if (SYSTEM_VERSION_LESS_THAN(@"5.0")) {
+        if (SYSTEM_VERSION_LESS_THAN(@"5.0") || sbAppNotNSString) {
             [switcherModel remove:app];
         }
         else {
             [switcherModel remove:app.displayIdentifier];
+        }
+    }
+}
+
+-(void)closeSwitcher{
+    SBUIController *uiController = (SBUIController*)[objc_getClass("SBUIController") sharedInstance];
+
+    if ([uiController isSwitcherShowing]) {
+        if ([uiController respondsToSelector:@selector(_dismissSwitcher:)]) {
+            [uiController _dismissSwitcher:0.0];
+        }
+        else if ([uiController respondsToSelector:@selector(dismissSwitcherAnimated:)]) {
+            [uiController dismissSwitcherAnimated:NO];
         }
     }
 }
