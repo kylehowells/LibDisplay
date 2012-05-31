@@ -31,7 +31,7 @@
 -(void)applicationLaunched:(SBApplication*)app{
     %orig;
 
-    NSLog(@"SBAppSwitcherController: -applicationLaunched: %@", app);
+//    NSLog(@"SBAppSwitcherController: -applicationLaunched: %@", app);
     [[LibDisplay sharedInstance] appLaunched:app];
 }
 
@@ -48,13 +48,13 @@
 -(void)addToFront:(id)app{
     %orig;
 
-    NSLog(@"SBAppSwitcherModel: -addToFront: %@", app);
+//    NSLog(@"SBAppSwitcherModel: -addToFront: %@", app);
     [[LibDisplay sharedInstance] addToFront:app];
 }
 -(void)remove:(id)app{
     %orig;
     
-    NSLog(@"SBAppSwitcherModel: -remove: %@", app);
+//    NSLog(@"SBAppSwitcherModel: -remove: %@", app);
 }
 %end
 

@@ -1,4 +1,4 @@
-include theos/makefiles/common.mk
+include /opt/theos/makefiles/common.mk
 
 TWEAK_NAME = LibDisplay
 LibDisplay_FILES = Tweak.xm LibDisplay.m

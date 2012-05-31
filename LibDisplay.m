@@ -48,8 +48,16 @@
 -(int)suspensionType;
 @end
 
-@interface SBProccess : NSObject {}
+@interface SBProcess : NSObject {}
 -(void)resume;
+-(void)addAssertion:(id)arg1;
+-(void)removeAssertion:(id)arg1;
+-(void)removeAllAssertions;
+-(id)assertions;
+@end
+
+@interface SBProcessAssertion : NSObject
+-(id)initWithProcess:(SBProcess*)process reason:(unsigned int)reason identifier:(NSString*)identifier;
 @end
 
 
@@ -168,6 +176,7 @@ static LibDisplay *_instance;
         [self.launchedApps removeObject:app];
     }
 }
+
 // Hacky stuff here :( it changed from SBApplication to NSString but without
 // changing the method names at all so you can't work out what it wants. + it
 // has always just stored the displayID so looking at the array iVar won't help either.
@@ -178,9 +187,11 @@ static LibDisplay *_instance;
     if ([app isKindOfClass:[NSString class]]) {
         app = [(SBApplicationController*)[objc_getClass("SBApplicationController") sharedInstance] applicationWithDisplayIdentifier:app];
     }
+    else {
+        sbAppNotNSString = YES;
+    }
 
     if (app) {
-        sbAppNotNSString = YES
         if ([array containsObject:app]) {
             [array removeObject:app];
             [array addObject:app];
@@ -254,10 +265,10 @@ static LibDisplay *_instance;
                 [springBoard showSpringBoardStatusBar];
             }
 
-//            if ([SPRINGBOARD respondsToSelector:@selector(setBackgroundingEnabled:forDisplayIdentifier:)]) {
-//                // Animate (to fix a backgrounder related bug)
-//                [fromApp setDeactivationSetting:2 flag:YES];
-//            }
+            if ([SPRINGBOARD respondsToSelector:@selector(setBackgroundingEnabled:forDisplayIdentifier:)]) {
+                // Animate (to fix a backgrounder related bug)
+                [fromApp setDeactivationSetting:2 flag:YES];
+            }
         }
 
         // Now pop is from the Active displayStack
@@ -315,7 +326,7 @@ static LibDisplay *_instance;
     SBAppSwitcherModel *switcherModel = (SBAppSwitcherModel*)[objc_getClass("SBAppSwitcherModel") sharedInstance];
     if ([switcherModel respondsToSelector:@selector(remove:)]) {
         // remove: takes an SBApplication on iOS 4 but an NSString on iOS 5 :(
-        if (SYSTEM_VERSION_LESS_THAN(@"5.0") || sbAppNotNSString) {
+        if (SYSTEM_VERSION_LESS_THAN(@"4.2") || sbAppNotNSString) {
             [switcherModel remove:app];
         }
         else {
