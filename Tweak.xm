@@ -62,7 +62,7 @@
 %hook SBApplication
 - (void)launchSucceeded:(BOOL)arg1 {
     [[LibDisplay sharedInstance] appFinishedLaunching:self];
-
+	
     %orig;
 }
 
@@ -71,8 +71,30 @@
     
     %orig;
 }
+
+
+
+
+// iOS 6
+-(void)didLaunch:(id)arg1{
+	%log;
+	[[LibDisplay sharedInstance] appFinishedLaunching:self];
+	
+    %orig;
+}
+-(void)didExitWithInfo:(id)arg1 type:(int)arg2{
+	[[LibDisplay sharedInstance] appQuit:self];
+    
+    %orig;
+}
 %end
 
+/**** iOS 6 ****/
+/*%hook BKSWorkspace
+-(void)activate:(id)arg1 withActivation:(id)arg2{ %log; NSLog(@"%@", [arg1 class]); return %orig; }
+-(void)_acquireApplicationActivationAssertion:(id)arg1 uniqueID:(id)arg2 name:(id)arg3{ %log; return %orig; }
+-(void)_releaseApplicationActivationAssertion:(id)arg1{ %log; return %orig; }
+%end*/
 
 %ctor{
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];

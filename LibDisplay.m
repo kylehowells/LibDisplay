@@ -6,7 +6,7 @@
 //  Copyright 2011 Howells Apps. All rights reserved.
 //
 
-#import <SpringBoard4.0/SBAppSwitcherController.h>
+//#import <SpringBoard4.0/SBAppSwitcherController.h>
 #import <SpringBoard4.0/SBUIController.h>
 #import <SpringBoard4.0/SBDisplayStack.h>
 #import <SpringBoard4.0/SBApplication.h>
@@ -27,6 +27,13 @@
 @interface SpringBoard : UIApplication {}
 -(void)setBackgroundingEnabled:(BOOL)backgroundingEnabled forDisplayIdentifier:(NSString *)displayIdentifier;
 -(void)showSpringBoardStatusBar;
+-(SBApplication*)_accessibilityFrontMostApplication;
+-(void)quitTopApplication:(void*)event;
+@end
+
+@interface SBApplicationController : NSObject {}
++(SBApplicationController*)sharedInstance;
+-(SBApplication*)applicationWithDisplayIdentifier:(NSString*)displayIdentifier;
 @end
 
 @interface SBAppSwitcherModel : NSObject {}
@@ -35,17 +42,14 @@
 -(void)remove:(id)remove;
 @end
 
-@interface SBApplicationController : NSObject {}
-+(SBApplicationController*)sharedInstance;
--(SBApplication*)applicationWithDisplayIdentifier:(NSString*)displayIdentifier;
-@end
-
 @interface SBUIController ()
 -(void)dismissSwitcherAnimated:(BOOL)animated;
 @end
 
 @interface SBApplication ()
 -(int)suspensionType;
+
+-(int)activationState; //iOS 6
 @end
 
 @interface SBProcess : NSObject {}
@@ -59,6 +63,33 @@
 @interface SBProcessAssertion : NSObject
 -(id)initWithProcess:(SBProcess*)process reason:(unsigned int)reason identifier:(NSString*)identifier;
 @end
+
+
+@interface SBIcon : NSObject
+@end
+
+@interface SBIconView : UIView
+@property(readonly) SBIcon *icon;
+- (void)setIcon:(SBIcon*)arg1;
+- (id)initWithDefaultSize;
+@end
+
+@interface SBIconModel : NSObject
+- (id)applicationIconForDisplayIdentifier:(id)arg1;
+@end
+
+@interface SBIconController : NSObject
++(SBIconController*)sharedInstance;
+-(SBIconModel*)model;
+-(void)iconCloseBoxTapped:(SBIconView*)arg1;
+@end
+
+@interface SBAppSwitcherController : NSObject
++(SBAppSwitcherController*)sharedInstance;
+-(void)iconCloseBoxTapped:(SBIconView*)arg1;
+@end
+
+
 
 
 #pragma mark - Private methods
@@ -139,10 +170,14 @@ static LibDisplay *_instance;
 
 #pragma mark - Application stuff
 -(SBApplication*)topApplication{
-    return [[self SBWActiveDisplayStack] topApplication];
+    return ([[self SBWActiveDisplayStack] topApplication] ?: [UIApp _accessibilityFrontMostApplication]);
 }
 
 -(BOOL)applicationIsLaunching:(SBApplication*)application{
+	if ([application respondsToSelector:@selector(activationState)]) {
+		return ([application activationState] == 1);
+	}
+	
     return (![self.launchedApps containsObject:application] && [self.runningApplications containsObject:application]);
 }
 
@@ -221,8 +256,9 @@ static LibDisplay *_instance;
     SBApplication *fromApp = [self topApplication];
 
     // Check if it's the same as the currently open application, if it is there's nothing todo.
-	if ([[toApp displayIdentifier] isEqualToString:[fromApp displayIdentifier]])
+	if ([[toApp displayIdentifier] isEqualToString:[fromApp displayIdentifier]]) {
         return;
+	}
 
     // If animated they want the system default (app to app transition, or zoom on homescreen).
     if (animated && toApp) {
@@ -250,6 +286,9 @@ static LibDisplay *_instance;
         // Note if it's a large application the user might see a brief flash of the homescreen.
         [[self SBWPreActivateDisplayStack] pushDisplay:toApp];
     }
+	else if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"6.0")) {
+		[UIApp quitTopApplication:nil];
+	}
     
 
     // If another app is open then close it
@@ -289,7 +328,7 @@ static LibDisplay *_instance;
     }
 
     // On iOS 4.0 it crashes springboard, but after a delay so I don't know why.
-    if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"4.1")) {
+    if (SYSTEM_VERSION_GREATER_THAN_OR_EQUAL_TO(@"4.1") && SYSTEM_VERSION_LESS_THAN(@"6.0")) {
         //******************* Proper app quiting code thanks to 'jmeosbn' - start **************//
 
         int suspendType = [application respondsToSelector:@selector(_suspensionType)] ? [application _suspensionType] : [application suspensionType];
@@ -307,9 +346,24 @@ static LibDisplay *_instance;
         //******************* Proper app quiting code thanks to 'jmeosbn' - end **************//
     }
 
-    // Now if it hasn't closed after 1/2 second kill it (doesn't work on root apps like iFile)
-    [application performSelector:@selector(kill) withObject:nil afterDelay:0.4];    // Probably un-needed
-    //[[objc_getClass("SBAppSwitcherController") sharedInstance] _quitButtonHit:APP];
+	if ([application respondsToSelector:@selector(kill)]) {
+		// Now if it hasn't closed after 1/2 second kill it (doesn't work on root apps like iFile)
+		[application performSelector:@selector(kill) withObject:nil afterDelay:0.4];    // Probably un-needed
+		//[[objc_getClass("SBAppSwitcherController") sharedInstance] _quitButtonHit:APP];
+	}
+	
+	SBAppSwitcherController *controller = [objc_getClass("SBAppSwitcherController") sharedInstance];
+	if ([controller respondsToSelector:@selector(iconCloseBoxTapped:)]) {
+		SBIcon *icon = [[[objc_getClass("SBIconController") sharedInstance] model] applicationIconForDisplayIdentifier:[application displayIdentifier]];
+		
+		SBIconView *iconView = [[objc_getClass("SBIconView") alloc] initWithDefaultSize];
+		iconView.icon = icon;
+		[controller iconCloseBoxTapped:iconView];
+		
+		iconView.icon = nil;
+		[iconView release];
+	}
+	
 
     if (removeFromSwitcher) {
         [self removeApplicationFromSwitcher:application];
